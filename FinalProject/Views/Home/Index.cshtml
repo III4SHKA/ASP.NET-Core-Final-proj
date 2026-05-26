@@ -1,0 +1,57 @@
+@model IReadOnlyList<FinalProject.ViewModels.HomeEventCardViewModel>
+
+@{
+    ViewData["Title"] = "Головна";
+}
+
+<div class="podii-page">
+    <div class="podii-shell container-xl">
+        <header class="topbar">
+            <a class="brand" href="#">PodiiHub</a>
+            <nav class="top-actions">
+                <a class="ghost-btn" href="#">Увійти</a>
+                <a class="dark-btn" href="#">Реєстрація</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <h1>Події, які хочеться відвідати</h1>
+            <p class="hero-copy">
+                Добірка актуальних конференцій, самітів і мітапів з технологій, продукту та бізнесу.
+            </p>
+        </section>
+
+        <section class="search-panel">
+            <div class="search-row">
+                <input type="text" placeholder="Пошук подій" />
+                <button class="dark-btn" type="button">Пошук</button>
+                <button class="accent-btn" type="button">Фільтр</button>
+            </div>
+        </section>
+
+        <section class="events-block">
+            <div class="section-head">
+                <h2>Останні події</h2>
+            </div>
+
+            <div class="events-grid">
+                @foreach (var eventCard in Model)
+                {
+                    <article class="event-card">
+                        <img src="@eventCard.ImageUrl" alt="@eventCard.Title" />
+                        <div class="event-content">
+                            <h3>@eventCard.Title</h3>
+                            <p class="event-description">@eventCard.Description</p>
+                            <p class="event-meta">@eventCard.StartAt.ToString("dd MMM yyyy HH:mm") · @eventCard.Location</p>
+                            <button class="details-btn" type="button">Детальніше</button>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <footer class="site-footer">
+            <span>© 2026 PodiiHub</span>
+        </footer>
+    </div>
+</div>
