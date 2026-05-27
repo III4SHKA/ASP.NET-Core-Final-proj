@@ -1,14 +1,12 @@
-namespace FinalProject.DTOs;
+namespace FinalProject.ViewModels;
 
-public class EventDto
+public class EventDetailsViewModel
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string TitleDescription { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public DateTime StartAt { get; set; }
     public int Capacity { get; set; }
-    public string CategoryName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
 }

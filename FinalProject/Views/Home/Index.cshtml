@@ -1,74 +1,128 @@
-@model FinalProject.ViewModels.HomeIndexViewModel
+﻿@model FinalProject.ViewModels.HomeIndexViewModel
 @{
     ViewData["Title"] = "Головна";
-    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var userName = User.Identity?.Name ?? "User";
 }
 
 <div class="ph-wrap">
     <header class="ph-topbar">
-        <a class="ph-brand" asp-controller="Home" asp-action="Index">
-            PodiiHub
-        </a>
-        <nav class="ph-nav">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <div class="ph-profile-menu">
-                    <button type="button" class="ph-profile-pill">@userName</button>
-                    <div class="ph-profile-dropdown">
-                        <form asp-controller="Account" asp-action="Logout" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="ph-btn-ghost">Вийти</button>
-                        </form>
+        <div class="ph-topbar-inner">
+            <a class="ph-brand" asp-controller="Home" asp-action="Index">
+                PodiiHub<span class="brand-dot"></span>
+            </a>
+            <nav class="ph-nav">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="ph-profile-menu">
+                        <button type="button" class="ph-profile-pill">@userName</button>
+                        <div class="ph-profile-dropdown">
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="ph-btn-ghost">Вийти</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            }
-            else
-            {
-                <a class="ph-btn-ghost" asp-controller="Account" asp-action="Login">Увійти</a>
-                <a class="ph-btn-dark" asp-controller="Account" asp-action="Register">Реєстрація</a>
-            }
-        </nav>
+                }
+                else
+                {
+                    <a class="ph-btn-ghost" asp-controller="Account" asp-action="Login">Увійти</a>
+                    <a class="ph-btn-dark" asp-controller="Account" asp-action="Register">Реєстрація</a>
+                }
+            </nav>
+        </div>
     </header>
 
     <div class="ph-shell">
         <section class="ph-hero">
-            <h1>Події, які хочеться відвідати</h1>
+            <h1>Події, які <em>хочеться</em> відвідати</h1>
             <p>Добірка актуальних конференцій, самітів і мітапів з технологій, продукту та бізнесу.</p>
         </section>
 
-        <div class="ph-search-row">
-            <input type="text" placeholder="Пошук подій…" />
-            <button class="ph-btn-search" type="button">Пошук</button>
-            <button class="ph-btn-filter" type="button">Фільтр</button>
-        </div>
+        <form class="ph-search-row" method="get" asp-controller="Home" asp-action="Index">
+            <input type="text" name="searching" value="@Model.SearchQuery" placeholder="Пошук подій за назвою..." />
+            <button class="ph-btn-search" type="submit">Пошук</button>
+        </form>
 
-        <p class="ph-section-label">Останні події</p>
+        <main class="ph-main">
+            <p class="ph-section-label">Останні події</p>
 
-        <div id="eventList" class="ph-event-list">
-            @await Html.PartialAsync("EventsChunk", new FinalProject.ViewModels.EventsChunkViewModel
-            {
-                Events = Model.Events,
-                NextSkip = Model.NextSkip,
-                HasMore = Model.HasMore
-            })
-        </div>
-
-        @if (Model.HasMore)
-        {
-            <div class="ph-load-more-wrap">
-                <button id="loadMoreBtn"
-                        type="button"
-                        class="ph-btn-ghost ph-load-more-btn"
-                        data-skip="@Model.NextSkip"
-                        data-take="@Model.Take">
-                    Ще
-                </button>
+            <div id="eventList" class="ph-event-list">
+                @await Html.PartialAsync("EventsChunk", new FinalProject.ViewModels.EventsChunkViewModel
+                {
+                    Events = Model.Events,
+                    NextSkip = Model.NextSkip,
+                    HasMore = Model.HasMore
+                })
             </div>
-        }
+
+            @if (Model.HasMore)
+            {
+                <div class="ph-load-more-wrap">
+                    <button id="loadMoreBtn"
+                            type="button"
+                            class="ph-load-more-btn"
+                            data-skip="@Model.NextSkip"
+                            data-take="@Model.Take"
+                            data-category="@Model.SelectedCategory"
+                            data-q="@Model.SearchQuery">
+                        Завантажити ще
+                    </button>
+                </div>
+            }
+        </main>
+
+        <aside class="ph-sidebar">
+            <div class="ph-sidebar-block">
+                <p class="ph-sidebar-title">Теми</p>
+                @if (Model.Categories.Count == 0)
+                {
+                    <p class="ph-sidebar-empty">Категорій поки немає.</p>
+                }
+                else
+                {
+                    <div class="ph-sidebar-tags">
+                        @foreach (var categoryName in Model.Categories)
+                        {
+                            var isActive = string.Equals(Model.SelectedCategory, categoryName, StringComparison.OrdinalIgnoreCase);
+                            <a asp-controller="Home"
+                               asp-action="Index"
+                               asp-route-category="@categoryName"
+                               asp-route-q="@Model.SearchQuery"
+                               class="ph-sidebar-tag @(isActive ? "ph-sidebar-tag-active" : "")">
+                                @categoryName
+                            </a>
+                        }
+                        <a asp-controller="Home"
+                           asp-action="Index"
+                           asp-route-q="@Model.SearchQuery"
+                           class="ph-sidebar-tag ph-sidebar-tag-reset">Скинути</a>
+                    </div>
+                }
+            </div>
+
+            <div class="ph-sidebar-block">
+                <p class="ph-sidebar-title">Найближчі події</p>
+                <ul class="ph-sidebar-upcoming">
+                    @foreach (var upcomingEvent in Model.UpcomingEvents)
+                    {
+                        <li>
+                            <span class="sui-date">@upcomingEvent.StartAt.ToString("dd MMM yyyy")</span>
+                            <a class="sui-name-link"
+                               asp-controller="Home"
+                               asp-action="Details"
+                               asp-route-id="@upcomingEvent.Id">
+                                <span class="sui-name">@upcomingEvent.Title</span>
+                            </a>
+                            <span class="sui-loc">@upcomingEvent.Location</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </aside>
 
         <footer class="ph-footer">
             <span>© 2026 PodiiHub</span>
+            <span>Всі події України</span>
         </footer>
     </div>
 </div>
@@ -86,15 +140,20 @@
                 if (loading) return;
                 loading = true;
                 loadMoreBtn.disabled = true;
+                loadMoreBtn.textContent = "Завантаження...";
 
                 const skip = loadMoreBtn.dataset.skip || "0";
                 const take = loadMoreBtn.dataset.take || "8";
+                const category = loadMoreBtn.dataset.category || "";
+                const q = loadMoreBtn.dataset.q || "";
+                const encodedCategory = encodeURIComponent(category);
+                const categoryQuery = category ? `&category=${encodedCategory}` : "";
+                const encodedQ = encodeURIComponent(q);
+                const qQuery = q ? `&q=${encodedQ}` : "";
 
                 try {
-                    const response = await fetch(`/Home/LoadMore?skip=${skip}&take=${take}`, { method: "GET" });
-                    if (!response.ok) {
-                        throw new Error("Load failed");
-                    }
+                    const response = await fetch(`/Home/LoadMore?skip=${skip}&take=${take}${categoryQuery}${qQuery}`, { method: "GET" });
+                    if (!response.ok) throw new Error("Load failed");
 
                     const html = await response.text();
                     const temp = document.createElement("div");
@@ -105,10 +164,7 @@
                         eventList.appendChild(card);
                     });
 
-                    if (!chunkMeta) {
-                        loadMoreBtn.remove();
-                        return;
-                    }
+                    if (!chunkMeta) { loadMoreBtn.remove(); return; }
 
                     const hasMore = chunkMeta.dataset.hasMore === "true";
                     const nextSkip = chunkMeta.dataset.nextSkip || skip;
@@ -119,9 +175,11 @@
                         loadMoreBtn.remove();
                     } else {
                         loadMoreBtn.disabled = false;
+                        loadMoreBtn.textContent = "Завантажити ще";
                     }
                 } catch {
                     loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = "Завантажити ще";
                 } finally {
                     loading = false;
                 }

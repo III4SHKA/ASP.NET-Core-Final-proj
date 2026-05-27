@@ -1,26 +1,26 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FinalProject.ViewModels;
 
 public class RegisterViewModel
 {
-    [Required]
-    [StringLength(100)]
+    [Required(ErrorMessage = "Вкажіть ім'я")]
+    [StringLength(100, ErrorMessage = "Ім'я має бути до 100 символів")]
     [Display(Name = "Ім'я")]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "Вкажіть email")]
+    [EmailAddress(ErrorMessage = "Некоректний формат email")]
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
-    [MinLength(6)]
+    [Required(ErrorMessage = "Вкажіть пароль")]
+    [MinLength(6, ErrorMessage = "Пароль має містити щонайменше 6 символів")]
     [DataType(DataType.Password)]
     [Display(Name = "Пароль")]
     public string Password { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "Підтвердіть пароль")]
     [DataType(DataType.Password)]
     [Compare(nameof(Password), ErrorMessage = "Паролі не співпадають")]
     [Display(Name = "Підтвердження пароля")]

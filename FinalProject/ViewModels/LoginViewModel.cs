@@ -1,14 +1,14 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FinalProject.ViewModels;
 
 public class LoginViewModel
 {
-    [Required]
+    [Required(ErrorMessage = "Вкажіть email")]
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "Вкажіть пароль")]
     [DataType(DataType.Password)]
     [Display(Name = "Пароль")]
     public string Password { get; set; } = string.Empty;

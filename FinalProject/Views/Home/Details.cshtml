@@ -1,0 +1,23 @@
+@model FinalProject.ViewModels.EventDetailsViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="ph-wrap">
+    <div class="ph-shell ph-shell-single">
+        <article class="ph-details-card">
+            <img class="ph-details-image" src="@Model.ImageUrl" alt="@Model.Title" />
+            <div class="ph-details-body">
+                <h1>@Model.Title</h1>
+                <div class="ph-details-meta">
+                    <span class="ph-meta-chip ph-meta-chip-time">@Model.StartAt.ToString("dd MMM yyyy")</span>
+                    <span class="ph-meta-chip ph-meta-chip-time">@Model.StartAt.ToString("HH:mm")</span>
+                    <span class="ph-meta-chip">@Model.Location</span>
+                    <span class="ph-meta-chip">Місць: @Model.Capacity</span>
+                </div>
+                <p class="ph-details-description">@Model.Description</p>
+                <a class="ph-btn-dark ph-back-btn" asp-controller="Home" asp-action="Index">Назад до подій</a>
+            </div>
+        </article>
+    </div>
+</div>

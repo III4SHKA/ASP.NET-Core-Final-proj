@@ -1,4 +1,4 @@
-@model FinalProject.ViewModels.EventsChunkViewModel
+﻿@model FinalProject.ViewModels.EventsChunkViewModel
 
 @foreach (var eventCard in Model.Events)
 {
@@ -8,13 +8,18 @@
              alt="@eventCard.Title" />
         <div class="ph-event-body">
             <div class="ph-event-title">@eventCard.Title</div>
-            <div class="ph-event-desc">@eventCard.Description</div>
+            <div class="ph-event-desc">@eventCard.TitleDescription</div>
             <div class="ph-event-foot">
-                <span class="ph-meta-chip">
-                    @eventCard.StartAt.ToString("dd MMM yyyy HH:mm")
-                </span>
-                <span class="ph-meta-chip ph-meta-dot">@eventCard.Location</span>
-                <button class="ph-details-btn" type="button">Детальніше →</button>
+                <div class="ph-event-meta">
+                    <span class="ph-meta-chip ph-meta-chip-time">@eventCard.StartAt.ToString("dd MMM yyyy")</span>
+                    <span class="ph-meta-chip ph-meta-chip-time">@eventCard.StartAt.ToString("HH:mm")</span>
+                    <span class="ph-meta-chip ph-meta-dot">@eventCard.Location</span>
+                    <span class="ph-meta-chip">Місць: @eventCard.Capacity</span>
+                </div>
+                <a class="ph-details-btn"
+                   asp-controller="Home"
+                   asp-action="Details"
+                   asp-route-id="@eventCard.Id">Детальніше →</a>
             </div>
         </div>
     </article>

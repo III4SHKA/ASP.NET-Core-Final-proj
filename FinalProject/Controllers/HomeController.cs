@@ -1,73 +1,119 @@
+﻿using FinalProject.Data;
 using FinalProject.DTOs;
 using FinalProject.Services;
 using FinalProject.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace FinalProject.Controllers
+namespace FinalProject.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly IEventService _eventService;
+    private readonly ApplicationDbContext _dbContext;
+
+    public HomeController(IEventService eventService, ApplicationDbContext dbContext)
     {
-        private readonly IEventService _eventService;
+        _eventService = eventService;
+        _dbContext = dbContext;
+    }
 
-        public HomeController(IEventService eventService)
+    public async Task<IActionResult> Index(int skip = 0, int take = 8, string? category = null, string? searching = null)
+    {
+        if (skip < 0) skip = 0;
+        if (take < 8) take = 8;
+        if (take > 64) take = 64;
+
+        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, category, searching);
+        var upcomingEvents = await _eventService.GetUpcomingEvents(3);
+        var totalEventsCount = await _eventService.GetEventsCount(category, searching);
+        var categories = await _dbContext.Categories
+            .OrderBy(category => category.Name)
+            .Select(category => category.Name)
+            .ToListAsync();
+
+        var pageModel = new HomeIndexViewModel
         {
-            _eventService = eventService;
+            Events = eventsFromDb.Select(ToCard).ToList(),
+            UpcomingEvents = upcomingEvents.Select(ToUpcoming).ToList(),
+            Categories = categories,
+            SelectedCategory = category,
+            SearchQuery = searching ?? string.Empty,
+            Skip = skip,
+            Take = take,
+            TotalCount = totalEventsCount
+        };
+
+        return View(pageModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> LoadMore(int skip = 0, int take = 8, string? category = null, string? searching = null)
+    {
+        if (skip < 0) skip = 0;
+        if (take < 1) take = 8;
+        if (take > 64) take = 64;
+
+        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, category, searching);
+        var totalEventsCount = await _eventService.GetEventsCount(category, searching);
+
+        var chunkModel = new EventsChunkViewModel
+        {
+            Events = eventsFromDb.Select(ToCard).ToList(),
+            NextSkip = skip + take,
+            HasMore = (skip + take) < totalEventsCount
+        };
+
+        return PartialView("EventsChunk", chunkModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var eventData = await _eventService.GetEventById(id);
+        if (eventData is null)
+        {
+            return NotFound();
         }
 
-        public async Task<IActionResult> Index(int skip = 0, int take = 8)
+        var detailsModel = new EventDetailsViewModel
         {
-            if (skip < 0) skip = 0;
-            if (take < 8) take = 8;
-            if (take > 64) take = 64;
+            Id = eventData.Id,
+            Title = eventData.Title,
+            Description = eventData.Description,
+            Location = eventData.Location,
+            StartAt = eventData.StartAt,
+            Capacity = eventData.Capacity,
+            ImageUrl = eventData.ImageUrl
+        };
 
-            var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take);
-            var totalEventsCount = await _eventService.GetEventsCount();
-            var homeEventCards = eventsFromDb.Select(ToCard).ToList();
+        return View(detailsModel);
+    }
 
-            var pageModel = new HomeIndexViewModel
-            {
-                Events = homeEventCards,
-                Skip = skip,
-                Take = take,
-                TotalCount = totalEventsCount
-            };
-
-            return View(pageModel);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> LoadMore(int skip = 0, int take = 8)
+    private static HomeEventCardViewModel ToCard(EventDto eventData)
+    {
+        return new HomeEventCardViewModel
         {
-            if (skip < 0) skip = 0;
-            if (take < 1) take = 8;
-            if (take > 64) take = 64;
+            Id = eventData.Id,
+            Title = eventData.Title,
+            TitleDescription = eventData.TitleDescription,
+            Description = eventData.Description,
+            Location = eventData.Location,
+            StartAt = eventData.StartAt,
+            Capacity = eventData.Capacity,
+            CategoryName = eventData.CategoryName,
+            ImageUrl = eventData.ImageUrl
+        };
+    }
 
-            var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take);
-            var totalEventsCount = await _eventService.GetEventsCount();
-            var eventCards = eventsFromDb.Select(ToCard).ToList();
-
-            var chunkModel = new EventsChunkViewModel
-            {
-                Events = eventCards,
-                NextSkip = skip + take,
-                HasMore = (skip + take) < totalEventsCount
-            };
-
-            return PartialView("EventsChunk", chunkModel);
-        }
-
-        private static HomeEventCardViewModel ToCard(EventDto eventData)
+    private static UpcomingEventViewModel ToUpcoming(EventDto eventData)
+    {
+        return new UpcomingEventViewModel
         {
-            return new HomeEventCardViewModel
-            {
-                Id = eventData.Id,
-                Title = eventData.Title,
-                Description = eventData.Description,
-                Location = eventData.Location,
-                StartAt = eventData.StartAt,
-                CategoryName = eventData.CategoryName,
-                ImageUrl = eventData.ImageUrl
-            };
-        }
+            Id = eventData.Id,
+            Title = eventData.Title,
+            Location = eventData.Location,
+            StartAt = eventData.StartAt
+        };
     }
 }

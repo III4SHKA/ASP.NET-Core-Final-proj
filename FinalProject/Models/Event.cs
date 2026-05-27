@@ -15,10 +15,15 @@ public class Event
     public string Description { get; set; } = string.Empty;
 
     [Required]
+    [StringLength(220)]
+    public string TitleDescription { get; set; } = string.Empty;
+
+    [Required]
     [StringLength(180)]
     public string Location { get; set; } = string.Empty;
 
     public DateTime StartAt { get; set; }
+    public int Capacity { get; set; }
 
     [StringLength(500)]
     public string? ImageUrl { get; set; }

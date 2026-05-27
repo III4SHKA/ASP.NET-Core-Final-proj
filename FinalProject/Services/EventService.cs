@@ -1,4 +1,4 @@
-using FinalProject.Data;
+﻿using FinalProject.Data;
 using FinalProject.DTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,10 +13,24 @@ public class EventService : IEventService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8)
+    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8, string? category = null, string? searching = null)
     {
-        return await _dbContext.Events
+        var query = _dbContext.Events
             .Include(e => e.Category)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(eventEntity => eventEntity.Category != null && eventEntity.Category.Name == category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searching))
+        {
+            var normalizedSearching = searching.Trim().ToLower();
+            query = query.Where(eventEntity => eventEntity.Title.ToLower().Contains(normalizedSearching));
+        }
+
+        return await query
             .OrderBy(e => e.StartAt)
             .Skip(skip)
             .Take(take)
@@ -25,16 +39,74 @@ public class EventService : IEventService
                 Id = e.Id,
                 Title = e.Title,
                 Description = e.Description,
+                TitleDescription = e.TitleDescription,
                 Location = e.Location,
                 StartAt = e.StartAt,
+                Capacity = e.Capacity,
                 CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                 ImageUrl = e.ImageUrl
             })
             .ToListAsync();
     }
 
-    public async Task<int> GetEventsCount()
+    public async Task<int> GetEventsCount(string? category = null, string? searching = null)
     {
-        return await _dbContext.Events.CountAsync();
+        var query = _dbContext.Events
+            .Include(e => e.Category)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(eventEntity => eventEntity.Category != null && eventEntity.Category.Name == category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searching))
+        {
+            var normalizedSearching = searching.Trim().ToLower();
+            query = query.Where(eventEntity => eventEntity.Title.ToLower().Contains(normalizedSearching));
+        }
+
+        return await query.CountAsync();
+    }
+
+    public async Task<IReadOnlyList<EventDto>> GetUpcomingEvents(int count = 3)
+    {
+        return await _dbContext.Events
+            .Include(e => e.Category)
+            .OrderBy(e => e.StartAt)
+            .Take(count)
+            .Select(e => new EventDto
+            {
+                Id = e.Id,
+                Title = e.Title,
+                Description = e.Description,
+                TitleDescription = e.TitleDescription,
+                Location = e.Location,
+                StartAt = e.StartAt,
+                Capacity = e.Capacity,
+                CategoryName = e.Category != null ? e.Category.Name : string.Empty,
+                ImageUrl = e.ImageUrl
+            })
+            .ToListAsync();
+    }
+
+    public async Task<EventDto?> GetEventById(int id)
+    {
+        return await _dbContext.Events
+            .Include(e => e.Category)
+            .Where(e => e.Id == id)
+            .Select(e => new EventDto
+            {
+                Id = e.Id,
+                Title = e.Title,
+                Description = e.Description,
+                TitleDescription = e.TitleDescription,
+                Location = e.Location,
+                StartAt = e.StartAt,
+                Capacity = e.Capacity,
+                CategoryName = e.Category != null ? e.Category.Name : string.Empty,
+                ImageUrl = e.ImageUrl
+            })
+            .FirstOrDefaultAsync();
     }
 }
