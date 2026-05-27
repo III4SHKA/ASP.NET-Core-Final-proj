@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FinalProject.Models;
 
@@ -28,11 +28,9 @@ public class Event
     [StringLength(500)]
     public string? ImageUrl { get; set; }
 
-    public int CategoryId { get; set; }
-    public Category? Category { get; set; }
-
     public int OrganizerId { get; set; }
     public User? Organizer { get; set; }
 
     public List<SavedEvent> SavedByUsers { get; set; } = new List<SavedEvent>();
 }
+

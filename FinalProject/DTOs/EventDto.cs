@@ -1,4 +1,4 @@
-namespace FinalProject.DTOs;
+﻿namespace FinalProject.DTOs;
 
 public class EventDto
 {
@@ -9,6 +9,5 @@ public class EventDto
     public string Location { get; set; } = string.Empty;
     public DateTime StartAt { get; set; }
     public int Capacity { get; set; }
-    public string CategoryName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
 }

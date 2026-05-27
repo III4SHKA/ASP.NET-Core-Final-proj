@@ -1,7 +1,10 @@
-﻿using FinalProject.Data;
+﻿using System.Security.Claims;
+using FinalProject.Data;
 using FinalProject.DTOs;
+using FinalProject.Models;
 using FinalProject.Services;
 using FinalProject.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,26 +21,20 @@ public class HomeController : Controller
         _dbContext = dbContext;
     }
 
-    public async Task<IActionResult> Index(int skip = 0, int take = 8, string? category = null, string? searching = null)
+    public async Task<IActionResult> Index(int skip = 0, int take = 8, string? searching = null)
     {
         if (skip < 0) skip = 0;
         if (take < 8) take = 8;
         if (take > 64) take = 64;
 
-        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, category, searching);
+        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, searching);
         var upcomingEvents = await _eventService.GetUpcomingEvents(3);
-        var totalEventsCount = await _eventService.GetEventsCount(category, searching);
-        var categories = await _dbContext.Categories
-            .OrderBy(category => category.Name)
-            .Select(category => category.Name)
-            .ToListAsync();
+        var totalEventsCount = await _eventService.GetEventsCount(searching);
 
         var pageModel = new HomeIndexViewModel
         {
             Events = eventsFromDb.Select(ToCard).ToList(),
             UpcomingEvents = upcomingEvents.Select(ToUpcoming).ToList(),
-            Categories = categories,
-            SelectedCategory = category,
             SearchQuery = searching ?? string.Empty,
             Skip = skip,
             Take = take,
@@ -48,14 +45,19 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> LoadMore(int skip = 0, int take = 8, string? category = null, string? searching = null)
+    public async Task<IActionResult> LoadMore(int skip = 0, int take = 8, string? searching = null)
     {
-        if (skip < 0) skip = 0;
-        if (take < 1) take = 8;
-        if (take > 64) take = 64;
+        if (skip < 0) 
+            skip = 0;
 
-        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, category, searching);
-        var totalEventsCount = await _eventService.GetEventsCount(category, searching);
+        if (take < 1) 
+            take = 8;
+
+        if (take > 64) 
+            take = 64;
+
+        var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take, searching);
+        var totalEventsCount = await _eventService.GetEventsCount(searching);
 
         var chunkModel = new EventsChunkViewModel
         {
@@ -76,6 +78,17 @@ public class HomeController : Controller
             return NotFound();
         }
 
+        var isSaved = false;
+        var isBooked = false;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            isSaved = await _dbContext.SavedEvents
+                .AnyAsync(savedEvent => savedEvent.UserId == userId && savedEvent.EventId == id);
+            isBooked = await _dbContext.BookedEvents
+                .AnyAsync(bookedEvent => bookedEvent.UserId == userId && bookedEvent.EventId == id);
+        }
+
         var detailsModel = new EventDetailsViewModel
         {
             Id = eventData.Id,
@@ -84,10 +97,96 @@ public class HomeController : Controller
             Location = eventData.Location,
             StartAt = eventData.StartAt,
             Capacity = eventData.Capacity,
-            ImageUrl = eventData.ImageUrl
+            ImageUrl = eventData.ImageUrl,
+            IsSaved = isSaved,
+            IsBooked = isBooked
         };
 
         return View(detailsModel);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleSave(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var savedEvent = await _dbContext.SavedEvents
+            .FirstOrDefaultAsync(currentSavedEvent => currentSavedEvent.UserId == userId && currentSavedEvent.EventId == id);
+
+        if (savedEvent == null)
+        {
+            _dbContext.SavedEvents.Add(new SavedEvent
+            {
+                UserId = userId,
+                EventId = id,
+                SavedAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            _dbContext.SavedEvents.Remove(savedEvent);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleBooking(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var bookedEvent = await _dbContext.BookedEvents
+            .FirstOrDefaultAsync(currentBookedEvent => currentBookedEvent.UserId == userId && currentBookedEvent.EventId == id);
+
+        var eventEntity = await _dbContext.Events.FirstOrDefaultAsync(currentEvent => currentEvent.Id == id);
+
+        if (bookedEvent == null)
+        {
+            if (eventEntity.Capacity > 0 && eventEntity.StartAt > DateTime.UtcNow)
+            {
+                _dbContext.BookedEvents.Add(new BookedEvent
+                {
+                    UserId = userId,
+                    EventId = id,
+                    BookedAt = DateTime.UtcNow
+                });
+                eventEntity.Capacity -= 1;
+            }
+        }
+        else
+        {
+            _dbContext.BookedEvents.Remove(bookedEvent);
+            eventEntity.Capacity += 1;
+        }
+
+        await _dbContext.SaveChangesAsync();
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [Authorize(Roles = "Admin,Organizer")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteEvent(int id)
+    {
+        var saved = _dbContext.SavedEvents.Where(x => x.EventId == id);
+        var booked = _dbContext.BookedEvents.Where(x => x.EventId == id);
+        _dbContext.SavedEvents.RemoveRange(saved);
+        _dbContext.BookedEvents.RemoveRange(booked);
+
+        var eventEntity = await _dbContext.Events.FirstOrDefaultAsync(x => x.Id == id);
+        if (eventEntity != null)
+        {
+            _dbContext.Events.Remove(eventEntity);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     private static HomeEventCardViewModel ToCard(EventDto eventData)
@@ -101,7 +200,6 @@ public class HomeController : Controller
             Location = eventData.Location,
             StartAt = eventData.StartAt,
             Capacity = eventData.Capacity,
-            CategoryName = eventData.CategoryName,
             ImageUrl = eventData.ImageUrl
         };
     }

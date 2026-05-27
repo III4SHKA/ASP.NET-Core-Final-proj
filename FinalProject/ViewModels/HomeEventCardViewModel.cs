@@ -1,4 +1,4 @@
-namespace FinalProject.ViewModels;
+﻿namespace FinalProject.ViewModels;
 
 public class HomeEventCardViewModel
 {
@@ -9,6 +9,5 @@ public class HomeEventCardViewModel
     public string Location { get; set; } = string.Empty;
     public DateTime StartAt { get; set; }
     public int Capacity { get; set; }
-    public string CategoryName { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
 }

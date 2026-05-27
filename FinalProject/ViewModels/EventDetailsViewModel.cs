@@ -1,4 +1,4 @@
-namespace FinalProject.ViewModels;
+﻿namespace FinalProject.ViewModels;
 
 public class EventDetailsViewModel
 {
@@ -9,4 +9,6 @@ public class EventDetailsViewModel
     public DateTime StartAt { get; set; }
     public int Capacity { get; set; }
     public string? ImageUrl { get; set; }
+    public bool IsSaved { get; set; }
+    public bool IsBooked { get; set; }
 }

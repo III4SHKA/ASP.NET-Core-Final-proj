@@ -16,6 +16,11 @@
                     <div class="ph-profile-menu">
                         <button type="button" class="ph-profile-pill">@userName</button>
                         <div class="ph-profile-dropdown">
+                            <a asp-controller="Account" asp-action="Profile" class="ph-btn-ghost">Профіль</a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Admin" asp-action="Index" class="ph-btn-ghost">Admin</a>
+                            }
                             <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="ph-btn-ghost">Вийти</button>
@@ -63,8 +68,7 @@
                             class="ph-load-more-btn"
                             data-skip="@Model.NextSkip"
                             data-take="@Model.Take"
-                            data-category="@Model.SelectedCategory"
-                            data-q="@Model.SearchQuery">
+                            data-searching="@Model.SearchQuery">
                         Завантажити ще
                     </button>
                 </div>
@@ -72,34 +76,6 @@
         </main>
 
         <aside class="ph-sidebar">
-            <div class="ph-sidebar-block">
-                <p class="ph-sidebar-title">Теми</p>
-                @if (Model.Categories.Count == 0)
-                {
-                    <p class="ph-sidebar-empty">Категорій поки немає.</p>
-                }
-                else
-                {
-                    <div class="ph-sidebar-tags">
-                        @foreach (var categoryName in Model.Categories)
-                        {
-                            var isActive = string.Equals(Model.SelectedCategory, categoryName, StringComparison.OrdinalIgnoreCase);
-                            <a asp-controller="Home"
-                               asp-action="Index"
-                               asp-route-category="@categoryName"
-                               asp-route-q="@Model.SearchQuery"
-                               class="ph-sidebar-tag @(isActive ? "ph-sidebar-tag-active" : "")">
-                                @categoryName
-                            </a>
-                        }
-                        <a asp-controller="Home"
-                           asp-action="Index"
-                           asp-route-q="@Model.SearchQuery"
-                           class="ph-sidebar-tag ph-sidebar-tag-reset">Скинути</a>
-                    </div>
-                }
-            </div>
-
             <div class="ph-sidebar-block">
                 <p class="ph-sidebar-title">Найближчі події</p>
                 <ul class="ph-sidebar-upcoming">
@@ -144,15 +120,12 @@
 
                 const skip = loadMoreBtn.dataset.skip || "0";
                 const take = loadMoreBtn.dataset.take || "8";
-                const category = loadMoreBtn.dataset.category || "";
-                const q = loadMoreBtn.dataset.q || "";
-                const encodedCategory = encodeURIComponent(category);
-                const categoryQuery = category ? `&category=${encodedCategory}` : "";
-                const encodedQ = encodeURIComponent(q);
-                const qQuery = q ? `&q=${encodedQ}` : "";
+                const searching = loadMoreBtn.dataset.searching || "";
+                const encodedSearching = encodeURIComponent(searching);
+                const searchingQuery = searching ? `&searching=${encodedSearching}` : "";
 
                 try {
-                    const response = await fetch(`/Home/LoadMore?skip=${skip}&take=${take}${categoryQuery}${qQuery}`, { method: "GET" });
+                    const response = await fetch(`/Home/LoadMore?skip=${skip}&take=${take}${searchingQuery}`, { method: "GET" });
                     if (!response.ok) throw new Error("Load failed");
 
                     const html = await response.text();

@@ -13,16 +13,9 @@ public class EventService : IEventService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8, string? category = null, string? searching = null)
+    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8, string? searching = null)
     {
-        var query = _dbContext.Events
-            .Include(e => e.Category)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(category))
-        {
-            query = query.Where(eventEntity => eventEntity.Category != null && eventEntity.Category.Name == category);
-        }
+        var query = _dbContext.Events.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searching))
         {
@@ -43,22 +36,14 @@ public class EventService : IEventService
                 Location = e.Location,
                 StartAt = e.StartAt,
                 Capacity = e.Capacity,
-                CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                 ImageUrl = e.ImageUrl
             })
             .ToListAsync();
     }
 
-    public async Task<int> GetEventsCount(string? category = null, string? searching = null)
+    public async Task<int> GetEventsCount(string? searching = null)
     {
-        var query = _dbContext.Events
-            .Include(e => e.Category)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(category))
-        {
-            query = query.Where(eventEntity => eventEntity.Category != null && eventEntity.Category.Name == category);
-        }
+        var query = _dbContext.Events.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searching))
         {
@@ -72,7 +57,6 @@ public class EventService : IEventService
     public async Task<IReadOnlyList<EventDto>> GetUpcomingEvents(int count = 3)
     {
         return await _dbContext.Events
-            .Include(e => e.Category)
             .OrderBy(e => e.StartAt)
             .Take(count)
             .Select(e => new EventDto
@@ -84,7 +68,6 @@ public class EventService : IEventService
                 Location = e.Location,
                 StartAt = e.StartAt,
                 Capacity = e.Capacity,
-                CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                 ImageUrl = e.ImageUrl
             })
             .ToListAsync();
@@ -93,7 +76,6 @@ public class EventService : IEventService
     public async Task<EventDto?> GetEventById(int id)
     {
         return await _dbContext.Events
-            .Include(e => e.Category)
             .Where(e => e.Id == id)
             .Select(e => new EventDto
             {
@@ -104,7 +86,6 @@ public class EventService : IEventService
                 Location = e.Location,
                 StartAt = e.StartAt,
                 Capacity = e.Capacity,
-                CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                 ImageUrl = e.ImageUrl
             })
             .FirstOrDefaultAsync();

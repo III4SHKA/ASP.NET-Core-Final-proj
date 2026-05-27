@@ -1,9 +1,12 @@
 using System.Security.Claims;
+using FinalProject.Data;
 using FinalProject.Models;
 using FinalProject.Services;
 using FinalProject.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinalProject.Controllers;
@@ -11,10 +14,12 @@ namespace FinalProject.Controllers;
 public class AccountController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly ApplicationDbContext _dbContext;
 
-    public AccountController(IAuthService authService)
+    public AccountController(IAuthService authService, ApplicationDbContext dbContext)
     {
         _authService = authService;
+        _dbContext = dbContext;
     }
 
     [HttpGet]
@@ -68,6 +73,51 @@ public class AccountController : Controller
 
         await SignInUser(user);
         return RedirectToAction("Index", "Home");
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var savedEvents = await _dbContext.SavedEvents
+            .Include(savedEvent => savedEvent.Event)
+            .Where(savedEvent => savedEvent.UserId == userId && savedEvent.Event != null)
+            .OrderByDescending(savedEvent => savedEvent.SavedAt)
+            .Select(savedEvent => new SavedEventProfileItemViewModel
+            {
+                EventId = savedEvent.EventId,
+                Title = savedEvent.Event!.Title,
+                Location = savedEvent.Event.Location,
+                StartAt = savedEvent.Event.StartAt,
+                SavedAt = savedEvent.SavedAt
+            })
+            .ToListAsync();
+
+        var bookedEvents = await _dbContext.BookedEvents
+            .Include(bookedEvent => bookedEvent.Event)
+            .Where(bookedEvent => bookedEvent.UserId == userId && bookedEvent.Event != null)
+            .OrderByDescending(bookedEvent => bookedEvent.BookedAt)
+            .Select(bookedEvent => new BookedEventProfileItemViewModel
+            {
+                EventId = bookedEvent.EventId,
+                Title = bookedEvent.Event!.Title,
+                Location = bookedEvent.Event.Location,
+                StartAt = bookedEvent.Event.StartAt,
+                BookedAt = bookedEvent.BookedAt
+            })
+            .ToListAsync();
+
+        var profileModel = new ProfileViewModel
+        {
+            Name = User.Identity!.Name!,
+            Email = User.FindFirstValue(ClaimTypes.Email)!,
+            Role = User.FindFirstValue(ClaimTypes.Role)!,
+            SavedEvents = savedEvents,
+            BookedEvents = bookedEvents
+        };
+
+        return View(profileModel);
     }
 
     [HttpPost]
