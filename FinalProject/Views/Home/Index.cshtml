@@ -1,57 +1,131 @@
-@model IReadOnlyList<FinalProject.ViewModels.HomeEventCardViewModel>
-
+@model FinalProject.ViewModels.HomeIndexViewModel
 @{
     ViewData["Title"] = "Головна";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var userName = User.Identity?.Name ?? "User";
 }
 
-<div class="podii-page">
-    <div class="podii-shell container-xl">
-        <header class="topbar">
-            <a class="brand" href="#">PodiiHub</a>
-            <nav class="top-actions">
-                <a class="ghost-btn" href="#">Увійти</a>
-                <a class="dark-btn" href="#">Реєстрація</a>
-            </nav>
-        </header>
+<div class="ph-wrap">
+    <header class="ph-topbar">
+        <a class="ph-brand" asp-controller="Home" asp-action="Index">
+            PodiiHub
+        </a>
+        <nav class="ph-nav">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="ph-profile-menu">
+                    <button type="button" class="ph-profile-pill">@userName</button>
+                    <div class="ph-profile-dropdown">
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="ph-btn-ghost">Вийти</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a class="ph-btn-ghost" asp-controller="Account" asp-action="Login">Увійти</a>
+                <a class="ph-btn-dark" asp-controller="Account" asp-action="Register">Реєстрація</a>
+            }
+        </nav>
+    </header>
 
-        <section class="hero">
+    <div class="ph-shell">
+        <section class="ph-hero">
             <h1>Події, які хочеться відвідати</h1>
-            <p class="hero-copy">
-                Добірка актуальних конференцій, самітів і мітапів з технологій, продукту та бізнесу.
-            </p>
+            <p>Добірка актуальних конференцій, самітів і мітапів з технологій, продукту та бізнесу.</p>
         </section>
 
-        <section class="search-panel">
-            <div class="search-row">
-                <input type="text" placeholder="Пошук подій" />
-                <button class="dark-btn" type="button">Пошук</button>
-                <button class="accent-btn" type="button">Фільтр</button>
-            </div>
-        </section>
+        <div class="ph-search-row">
+            <input type="text" placeholder="Пошук подій…" />
+            <button class="ph-btn-search" type="button">Пошук</button>
+            <button class="ph-btn-filter" type="button">Фільтр</button>
+        </div>
 
-        <section class="events-block">
-            <div class="section-head">
-                <h2>Останні події</h2>
-            </div>
+        <p class="ph-section-label">Останні події</p>
 
-            <div class="events-grid">
-                @foreach (var eventCard in Model)
-                {
-                    <article class="event-card">
-                        <img src="@eventCard.ImageUrl" alt="@eventCard.Title" />
-                        <div class="event-content">
-                            <h3>@eventCard.Title</h3>
-                            <p class="event-description">@eventCard.Description</p>
-                            <p class="event-meta">@eventCard.StartAt.ToString("dd MMM yyyy HH:mm") · @eventCard.Location</p>
-                            <button class="details-btn" type="button">Детальніше</button>
-                        </div>
-                    </article>
-                }
-            </div>
-        </section>
+        <div id="eventList" class="ph-event-list">
+            @await Html.PartialAsync("EventsChunk", new FinalProject.ViewModels.EventsChunkViewModel
+            {
+                Events = Model.Events,
+                NextSkip = Model.NextSkip,
+                HasMore = Model.HasMore
+            })
+        </div>
 
-        <footer class="site-footer">
+        @if (Model.HasMore)
+        {
+            <div class="ph-load-more-wrap">
+                <button id="loadMoreBtn"
+                        type="button"
+                        class="ph-btn-ghost ph-load-more-btn"
+                        data-skip="@Model.NextSkip"
+                        data-take="@Model.Take">
+                    Ще
+                </button>
+            </div>
+        }
+
+        <footer class="ph-footer">
             <span>© 2026 PodiiHub</span>
         </footer>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const loadMoreBtn = document.getElementById("loadMoreBtn");
+            const eventList = document.getElementById("eventList");
+            if (!loadMoreBtn || !eventList) return;
+
+            let loading = false;
+
+            loadMoreBtn.addEventListener("click", async function () {
+                if (loading) return;
+                loading = true;
+                loadMoreBtn.disabled = true;
+
+                const skip = loadMoreBtn.dataset.skip || "0";
+                const take = loadMoreBtn.dataset.take || "8";
+
+                try {
+                    const response = await fetch(`/Home/LoadMore?skip=${skip}&take=${take}`, { method: "GET" });
+                    if (!response.ok) {
+                        throw new Error("Load failed");
+                    }
+
+                    const html = await response.text();
+                    const temp = document.createElement("div");
+                    temp.innerHTML = html;
+
+                    const chunkMeta = temp.querySelector(".ph-chunk-meta");
+                    temp.querySelectorAll(".ph-event-row").forEach(function (card) {
+                        eventList.appendChild(card);
+                    });
+
+                    if (!chunkMeta) {
+                        loadMoreBtn.remove();
+                        return;
+                    }
+
+                    const hasMore = chunkMeta.dataset.hasMore === "true";
+                    const nextSkip = chunkMeta.dataset.nextSkip || skip;
+
+                    loadMoreBtn.dataset.skip = nextSkip;
+
+                    if (!hasMore) {
+                        loadMoreBtn.remove();
+                    } else {
+                        loadMoreBtn.disabled = false;
+                    }
+                } catch {
+                    loadMoreBtn.disabled = false;
+                } finally {
+                    loading = false;
+                }
+            });
+        })();
+    </script>
+}

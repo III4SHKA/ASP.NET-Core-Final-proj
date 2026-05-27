@@ -1,0 +1,39 @@
+@model FinalProject.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Вхід";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Вхід</h1>
+
+        @if (TempData["AuthMessage"] is string message)
+        {
+            <div class="auth-message">@message</div>
+        }
+
+        <form asp-action="Login" method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-text"></div>
+
+            <label asp-for="Email"></label>
+            <input asp-for="Email" />
+            <span asp-validation-for="Email" class="validation-text"></span>
+
+            <label asp-for="Password"></label>
+            <input asp-for="Password" />
+            <span asp-validation-for="Password" class="validation-text"></span>
+
+            <button type="submit" class="dark-btn auth-submit">Увійти</button>
+        </form>
+
+        <p class="auth-switch">
+            Немає акаунта? <a asp-controller="Account" asp-action="Register">Реєстрація</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

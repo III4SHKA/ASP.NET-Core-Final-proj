@@ -29,5 +29,5 @@ public class Event
     public int OrganizerId { get; set; }
     public User? Organizer { get; set; }
 
-    public ICollection<SavedEvent> SavedByUsers { get; set; } = new List<SavedEvent>();
+    public List<SavedEvent> SavedByUsers { get; set; } = new List<SavedEvent>();
 }

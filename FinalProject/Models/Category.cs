@@ -10,5 +10,5 @@ public class Category
     [StringLength(80)]
     public string Name { get; set; } = string.Empty;
 
-    public ICollection<Event> Events { get; set; } = new List<Event>();
+    public List<Event> Events { get; set; } = new List<Event>();
 }

@@ -1,0 +1,25 @@
+@model FinalProject.ViewModels.EventsChunkViewModel
+
+@foreach (var eventCard in Model.Events)
+{
+    <article class="ph-event-row">
+        <img class="ph-event-thumb"
+             src="@eventCard.ImageUrl"
+             alt="@eventCard.Title" />
+        <div class="ph-event-body">
+            <div class="ph-event-title">@eventCard.Title</div>
+            <div class="ph-event-desc">@eventCard.Description</div>
+            <div class="ph-event-foot">
+                <span class="ph-meta-chip">
+                    @eventCard.StartAt.ToString("dd MMM yyyy HH:mm")
+                </span>
+                <span class="ph-meta-chip ph-meta-dot">@eventCard.Location</span>
+                <button class="ph-details-btn" type="button">Детальніше →</button>
+            </div>
+        </div>
+    </article>
+}
+
+<div class="ph-chunk-meta"
+     data-next-skip="@Model.NextSkip"
+     data-has-more="@Model.HasMore.ToString().ToLowerInvariant()"></div>

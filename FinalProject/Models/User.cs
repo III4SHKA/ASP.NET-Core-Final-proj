@@ -18,6 +18,10 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     [Required]
+    [StringLength(120)]
+    public string Salt { get; set; } = string.Empty;
+
+    [Required]
     [StringLength(30)]
     public string Role { get; set; } = "User";
 }

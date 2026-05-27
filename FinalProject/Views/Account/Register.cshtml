@@ -1,0 +1,42 @@
+@model FinalProject.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Реєстрація";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Реєстрація</h1>
+
+        <form asp-action="Register" method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-text"></div>
+
+            <label asp-for="Name"></label>
+            <input asp-for="Name" />
+            <span asp-validation-for="Name" class="validation-text"></span>
+
+            <label asp-for="Email"></label>
+            <input asp-for="Email" />
+            <span asp-validation-for="Email" class="validation-text"></span>
+
+            <label asp-for="Password"></label>
+            <input asp-for="Password" />
+            <span asp-validation-for="Password" class="validation-text"></span>
+
+            <label asp-for="ConfirmPassword"></label>
+            <input asp-for="ConfirmPassword" />
+            <span asp-validation-for="ConfirmPassword" class="validation-text"></span>
+
+            <button type="submit" class="dark-btn auth-submit">Створити акаунт</button>
+        </form>
+
+        <p class="auth-switch">
+            Вже є акаунт? <a asp-controller="Account" asp-action="Login">Увійти</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

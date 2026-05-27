@@ -1,5 +1,6 @@
 using FinalProject.Data;
 using FinalProject.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IHashService, SimpleHashService>();
+builder.Services.AddScoped<IAuthService, AuthServiceWithHash>();
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Login";
+        options.Cookie.Name = "podiihub_auth";
+    });
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
@@ -25,6 +36,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

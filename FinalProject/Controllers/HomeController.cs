@@ -14,14 +14,49 @@ namespace FinalProject.Controllers
             _eventService = eventService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int skip = 0, int take = 8)
         {
-            var latestEvents = await _eventService.GetLatestEventsAsync();
-            var homeEventCards = latestEvents.Select(MapToCardViewModel).ToList();
-            return View(homeEventCards);
+            if (skip < 0) skip = 0;
+            if (take < 8) take = 8;
+            if (take > 64) take = 64;
+
+            var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take);
+            var totalEventsCount = await _eventService.GetEventsCount();
+            var homeEventCards = eventsFromDb.Select(ToCard).ToList();
+
+            var pageModel = new HomeIndexViewModel
+            {
+                Events = homeEventCards,
+                Skip = skip,
+                Take = take,
+                TotalCount = totalEventsCount
+            };
+
+            return View(pageModel);
         }
 
-        private static HomeEventCardViewModel MapToCardViewModel(EventDto eventData)
+        [HttpGet]
+        public async Task<IActionResult> LoadMore(int skip = 0, int take = 8)
+        {
+            if (skip < 0) skip = 0;
+            if (take < 1) take = 8;
+            if (take > 64) take = 64;
+
+            var eventsFromDb = await _eventService.GetLatestEventsAsync(skip, take);
+            var totalEventsCount = await _eventService.GetEventsCount();
+            var eventCards = eventsFromDb.Select(ToCard).ToList();
+
+            var chunkModel = new EventsChunkViewModel
+            {
+                Events = eventCards,
+                NextSkip = skip + take,
+                HasMore = (skip + take) < totalEventsCount
+            };
+
+            return PartialView("EventsChunk", chunkModel);
+        }
+
+        private static HomeEventCardViewModel ToCard(EventDto eventData)
         {
             return new HomeEventCardViewModel
             {

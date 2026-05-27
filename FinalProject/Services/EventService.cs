@@ -13,12 +13,12 @@ public class EventService : IEventService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int take = 8)
+    public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8)
     {
         return await _dbContext.Events
-            .AsNoTracking()
             .Include(e => e.Category)
             .OrderBy(e => e.StartAt)
+            .Skip(skip)
             .Take(take)
             .Select(e => new EventDto
             {
@@ -31,5 +31,10 @@ public class EventService : IEventService
                 ImageUrl = e.ImageUrl
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetEventsCount()
+    {
+        return await _dbContext.Events.CountAsync();
     }
 }
