@@ -1,10 +1,15 @@
-using FinalProject.Data;
+﻿using FinalProject.Data;
 using FinalProject.Models;
 using FinalProject.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Services;
 
+// Сервіс авторизації.
+// Містить бізнес-логіку реєстрації та входу:
+// - перевірка унікальності email;
+// - хешування пароля з сіллю;
+// - перевірка пароля при логіні.
 public class AuthServiceWithHash : IAuthService
 {
     private readonly ApplicationDbContext _dbContext;
@@ -18,6 +23,7 @@ public class AuthServiceWithHash : IAuthService
 
     public async Task<(bool Success, string ErrorMessage, User? CreatedUser)> Register(RegisterViewModel model)
     {
+        // Зводимо email до нижнього регістру для уникнення дублікатів.
         var normalizedEmail = model.Email.ToLower();
 
         if (await _dbContext.Users.AnyAsync(user => user.Email == normalizedEmail))
@@ -45,6 +51,7 @@ public class AuthServiceWithHash : IAuthService
 
     public async Task<User?> Login(LoginViewModel model)
     {
+        // Шукаємо користувача і перевіряємо пароль через хеш-сервіс.
         var normalizedEmail = model.Email.ToLower();
         var user = await _dbContext.Users.FirstOrDefaultAsync(currentUser => currentUser.Email == normalizedEmail);
         if (user == null)
@@ -58,6 +65,7 @@ public class AuthServiceWithHash : IAuthService
         {
             return user;
         }
+
         return null;
     }
 }

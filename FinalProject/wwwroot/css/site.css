@@ -1064,3 +1064,47 @@ html, body {
     font-size: 13px;
 }
 
+.ph-toast {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 2000;
+    background: #111111;
+    color: #ffffff;
+    border: 1px solid #2b2b2b;
+    border-radius: 8px;
+    padding: 12px 16px;
+    min-width: 240px;
+    max-width: 360px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    font-size: 14px;
+    font-weight: 600;
+    animation: phToastIn 0.3s ease-out;
+}
+
+.ph-toast.hide {
+    animation: phToastOut 0.35s ease-in forwards;
+}
+
+@keyframes phToastIn {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes phToastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+}
+

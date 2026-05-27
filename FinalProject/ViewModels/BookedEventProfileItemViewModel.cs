@@ -1,5 +1,6 @@
 ﻿namespace FinalProject.ViewModels;
 
+// Один елемент списку заброньованих подій у профілі.
 public class BookedEventProfileItemViewModel
 {
     public int EventId { get; set; }

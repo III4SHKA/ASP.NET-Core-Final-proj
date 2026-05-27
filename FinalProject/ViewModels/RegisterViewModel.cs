@@ -2,6 +2,7 @@
 
 namespace FinalProject.ViewModels;
 
+// Модель форми реєстрації.
 public class RegisterViewModel
 {
     [Required(ErrorMessage = "Вкажіть ім'я")]

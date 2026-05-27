@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Services;
 
+// Сервіс доступу до подій.
+// Контролер Home не працює з DbContext напряму для читання подій,
+// а викликає цей сервіс, щоб не змішувати UI-логіку і запити до БД.
 public class EventService : IEventService
 {
     private readonly ApplicationDbContext _dbContext;
@@ -15,6 +18,8 @@ public class EventService : IEventService
 
     public async Task<IReadOnlyList<EventDto>> GetLatestEventsAsync(int skip = 0, int take = 8, string? searching = null)
     {
+        // Базовий запит списку подій для головної.
+        // Далі до нього додаємо пошук, пагінацію і маппінг у DTO.
         var query = _dbContext.Events.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searching))
@@ -43,6 +48,7 @@ public class EventService : IEventService
 
     public async Task<int> GetEventsCount(string? searching = null)
     {
+        // Кількість потрібна для розрахунку пагінації.
         var query = _dbContext.Events.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searching))
@@ -56,6 +62,7 @@ public class EventService : IEventService
 
     public async Task<IReadOnlyList<EventDto>> GetUpcomingEvents(int count = 3)
     {
+        // Короткий список найближчих подій (бічна колонка на головній).
         return await _dbContext.Events
             .OrderBy(e => e.StartAt)
             .Take(count)
@@ -75,6 +82,7 @@ public class EventService : IEventService
 
     public async Task<EventDto?> GetEventById(int id)
     {
+        // Одна подія для сторінки Details.
         return await _dbContext.Events
             .Where(e => e.Id == id)
             .Select(e => new EventDto

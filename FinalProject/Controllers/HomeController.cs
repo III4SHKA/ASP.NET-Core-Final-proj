@@ -10,6 +10,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Controllers;
 
+// Публічний контролер для роботи з подіями.
+// Цей контролер обслуговує основний user-flow:
+// - перегляд списку подій;
+// - перегляд деталей;
+// - збереження події;
+// - бронювання місця;
+// - видалення події (для ролей Admin/Organizer).
 public class HomeController : Controller
 {
     private readonly IEventService _eventService;
@@ -23,6 +30,8 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(int skip = 0, int take = 8, string? searching = null)
     {
+        // Головна сторінка з пагінацією і пошуком.
+        // skip/take приходять із query string.
         if (skip < 0) skip = 0;
         if (take < 8) take = 8;
         if (take > 64) take = 64;
@@ -47,6 +56,8 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> LoadMore(int skip = 0, int take = 8, string? searching = null)
     {
+        // Дія для кнопки "Завантажити ще".
+        // Повертає не повну сторінку, а partial view з наступною порцією карток.
         if (skip < 0) 
             skip = 0;
 
@@ -72,6 +83,9 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
+        // Деталі конкретної події.
+        // Також перевіряємо для поточного користувача:
+        // чи подія збережена і чи вже заброньована.
         var eventData = await _eventService.GetEventById(id);
         if (eventData is null)
         {
@@ -110,6 +124,9 @@ public class HomeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleSave(int id)
     {
+        // Toggle-логіка:
+        // якщо запису в SavedEvents нема -> створюємо;
+        // якщо запис є -> видаляємо.
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var savedEvent = await _dbContext.SavedEvents
@@ -123,10 +140,12 @@ public class HomeController : Controller
                 EventId = id,
                 SavedAt = DateTime.UtcNow
             });
+            TempData["ToastMessage"] = "Подію збережено";
         }
         else
         {
             _dbContext.SavedEvents.Remove(savedEvent);
+            TempData["ToastMessage"] = "Подію прибрано зі збережених";
         }
 
         await _dbContext.SaveChangesAsync();
@@ -139,6 +158,10 @@ public class HomeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleBooking(int id)
     {
+        // Toggle-логіка бронювання:
+        // - якщо броні нема і є місце -> бронюємо;
+        // - якщо бронь є -> скасовуємо.
+        // Паралельно оновлюємо Capacity у Event.
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var bookedEvent = await _dbContext.BookedEvents
@@ -157,12 +180,14 @@ public class HomeController : Controller
                     BookedAt = DateTime.UtcNow
                 });
                 eventEntity.Capacity -= 1;
+                TempData["ToastMessage"] = "Місце успішно заброньовано";
             }
         }
         else
         {
             _dbContext.BookedEvents.Remove(bookedEvent);
             eventEntity.Capacity += 1;
+            TempData["ToastMessage"] = "Бронювання скасовано";
         }
 
         await _dbContext.SaveChangesAsync();
@@ -174,6 +199,9 @@ public class HomeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteEvent(int id)
     {
+        // Видалення події дозволено тільки ролям Admin/Organizer.
+        // Перед видаленням самої події чистимо пов'язані записи
+        // з таблиць SavedEvents та BookedEvents.
         var saved = _dbContext.SavedEvents.Where(x => x.EventId == id);
         var booked = _dbContext.BookedEvents.Where(x => x.EventId == id);
         _dbContext.SavedEvents.RemoveRange(saved);

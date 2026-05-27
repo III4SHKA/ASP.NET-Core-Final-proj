@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using FinalProject.Data;
 using FinalProject.Models;
 using FinalProject.Services;
@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FinalProject.Controllers;
 
+// Контролер акаунта.
+// Відповідає за весь цикл користувача:
+// реєстрація -> вхід -> робота в сесії -> перегляд профілю -> вихід.
 public class AccountController : Controller
 {
     private readonly IAuthService _authService;
@@ -25,6 +28,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Register()
     {
+        // GET-екран реєстрації.
         return View(new RegisterViewModel());
     }
 
@@ -32,6 +36,10 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        // POST-обробка форми реєстрації:
+        // 1) перевірка валідації;
+        // 2) створення користувача через сервіс;
+        // 3) автоматичний вхід після успіху.
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -52,6 +60,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login()
     {
+        // GET-екран входу.
         return View(new LoginViewModel());
     }
 
@@ -59,6 +68,8 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
+        // POST-обробка входу:
+        // перевіряємо email/пароль і створюємо cookie-сесію.
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -79,6 +90,10 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> Profile()
     {
+        // Повертає профіль поточного авторизованого користувача.
+        // Додатково підтягує дві колекції:
+        // - збережені події;
+        // - заброньовані події.
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var savedEvents = await _dbContext.SavedEvents
             .Include(savedEvent => savedEvent.Event)
@@ -124,12 +139,17 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        // Видаляє cookie-сесію.
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction("Index", "Home");
     }
 
     private async Task SignInUser(User user)
     {
+        // Формуємо claims і записуємо їх в cookie.
+        // Саме ці claims потім використовуються:
+        // - в [Authorize(Roles = "...")]
+        // - у View (Name, Email, Role)
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),

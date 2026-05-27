@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FinalProject.Models;
 
+// Користувач системи.
+// Role використовується для доступу до дій (User / Organizer / Admin).
 public class User
 {
     public int Id { get; set; }

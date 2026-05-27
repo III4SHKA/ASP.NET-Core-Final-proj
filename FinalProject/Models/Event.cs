@@ -2,6 +2,8 @@
 
 namespace FinalProject.Models;
 
+// Подія, яка відображається на головній і в деталях.
+// Capacity змінюється при бронюванні/скасуванні броні.
 public class Event
 {
     public int Id { get; set; }

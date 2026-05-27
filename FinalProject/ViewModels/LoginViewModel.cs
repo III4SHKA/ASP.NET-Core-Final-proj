@@ -2,6 +2,7 @@
 
 namespace FinalProject.ViewModels;
 
+// Модель форми входу.
 public class LoginViewModel
 {
     [Required(ErrorMessage = "Вкажіть email")]

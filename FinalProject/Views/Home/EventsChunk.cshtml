@@ -1,4 +1,5 @@
 ﻿@model FinalProject.ViewModels.EventsChunkViewModel
+@* Частковий шаблон для підвантаження нових карток подій. *@
 
 @foreach (var eventCard in Model.Events)
 {
@@ -28,3 +29,6 @@
 <div class="ph-chunk-meta"
      data-next-skip="@Model.NextSkip"
      data-has-more="@Model.HasMore.ToString().ToLowerInvariant()"></div>
+
+
+

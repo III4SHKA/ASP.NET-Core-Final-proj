@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using FinalProject.Data;
 using FinalProject.Models;
 using FinalProject.ViewModels;
@@ -8,6 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Controllers;
 
+// Контролер адмін-панелі.
+// Цей контролер відповідає за просте адміністрування у межах курсового:
+// 1) створення події;
+// 2) перегляд списку користувачів;
+// 3) видача ролі Organizer.
+// Весь контролер закритий атрибутом [Authorize(Roles = "Admin")],
+// тобто будь-яка дія всередині доступна тільки адміну.
 [Authorize(Roles = "Admin")]
 [Route("admin")]
 public class AdminController : Controller
@@ -22,17 +29,28 @@ public class AdminController : Controller
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
+        // [HttpGet("")] означає:
+        // - HTTP метод: GET;
+        // - порожній підмаршрут відносно [Route("admin")].
+        // Підсумковий URL цієї дії: /admin
         var model = new AdminPageViewModel();
         await FillUsers(model);
         return View(model);
     }
 
+    // [HttpPost("add-event")] означає:
+    // - HTTP метод: POST;
+    // - підмаршрут "add-event" відносно [Route("admin")].
+    // Підсумковий URL цієї дії: POST /admin/add-event
+    // Саме цю адресу викликає форма створення події в адмінці.
     [HttpPost("add-event")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddEvent(AdminPageViewModel model)
     {
+        // Приймаємо дані з форми, перевіряємо їх і створюємо Event у БД.
         if (!ModelState.IsValid)
         {
+            // Якщо валідація не пройшла, повертаємо цю ж сторінку з помилками.
             await FillUsers(model);
             return View("Index", model);
         }
@@ -44,6 +62,7 @@ public class AdminController : Controller
             return View("Index", model);
         }
 
+        // Беремо id поточного адміна з Claims, щоб записати хто створив подію.
         var adminId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var eventEntity = new Event
@@ -69,6 +88,7 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MakeOrganizer(int userId)
     {
+        // Видача ролі Organizer конкретному користувачу із таблиці.
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
         if (user == null)
         {
@@ -87,6 +107,7 @@ public class AdminController : Controller
 
     private async Task FillUsers(AdminPageViewModel model)
     {
+        // Підтягує список користувачів для таблиці на сторінці /admin.
         model.Users = await _dbContext.Users
             .OrderBy(x => x.Id)
             .Select(x => new AdminUserRowViewModel

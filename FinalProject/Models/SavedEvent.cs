@@ -1,5 +1,6 @@
 namespace FinalProject.Models;
 
+// Зв'язка "користувач зберіг подію".
 public class SavedEvent
 {
     public int Id { get; set; }

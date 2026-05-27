@@ -1,5 +1,7 @@
 ﻿namespace FinalProject.DTOs;
 
+// DTO для передачі даних події із сервісу в контролер.
+// Дозволяє не віддавати EF-сутність напряму у UI.
 public class EventDto
 {
     public int Id { get; set; }

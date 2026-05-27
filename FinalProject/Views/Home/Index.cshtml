@@ -1,4 +1,5 @@
 ﻿@model FinalProject.ViewModels.HomeIndexViewModel
+@* Головна сторінка: пошук, список подій, кнопка Завантажити ще, блок найближчих подій. *@
 @{
     ViewData["Title"] = "Головна";
     var userName = User.Identity?.Name ?? "User";
@@ -160,3 +161,6 @@
         })();
     </script>
 }
+
+
+

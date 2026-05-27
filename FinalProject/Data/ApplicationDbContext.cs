@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Data;
 
+// Контекст EF Core: через нього йде вся робота з таблицями БД.
+// Використовується в сервісах і контролерах через DI.
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)

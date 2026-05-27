@@ -1,5 +1,6 @@
 namespace FinalProject.Services;
 
+// Контракт сервісу для роботи з паролями.
 public interface IHashService
 {
     string GenerateSalt();

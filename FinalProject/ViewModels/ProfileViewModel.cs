@@ -1,5 +1,6 @@
-namespace FinalProject.ViewModels;
+﻿namespace FinalProject.ViewModels;
 
+// Загальна модель профілю користувача.
 public class ProfileViewModel
 {
     public string Name { get; set; } = string.Empty;

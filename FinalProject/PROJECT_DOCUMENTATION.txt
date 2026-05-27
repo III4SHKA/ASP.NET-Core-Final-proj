@@ -1,0 +1,274 @@
+﻿FINALPROJECT - ПОВНА ДОКУМЕНТАЦІЯ
+=================================
+
+1) ЗАГАЛЬНА ІДЕЯ
+----------------
+FinalProject - це ASP.NET Core MVC застосунок для подій (PodiiHub).
+Основні можливості:
+- перегляд подій на головній сторінці;
+- пошук подій за назвою;
+- перегляд деталей події;
+- реєстрація/вхід користувача;
+- збереження подій у профіль;
+- бронювання місця на подію;
+- видалення події для ролей Organizer та Admin;
+- адмін-панель /admin для ролі Admin:
+  - створення нової події;
+  - видача ролі Organizer користувачам.
+
+
+2) ТЕХНОЛОГІЧНИЙ СТЕК
+---------------------
+- .NET 9
+- ASP.NET Core MVC
+- Entity Framework Core
+- SQLite
+- Cookie Authentication
+- Razor Views
+- Bootstrap + власні стилі
+
+
+3) СТРУКТУРА ПРОЄКТУ
+--------------------
+- Program.cs
+  Конфігурація застосунку, DI, маршрути, авторизація.
+
+- Data/ApplicationDbContext.cs
+  Контекст EF Core, таблиці: Users, Events, SavedEvents, BookedEvents.
+
+- Models/
+  Сутності БД.
+
+- DTOs/
+  Проміжні моделі для передачі даних між шаром сервісу і контролером.
+
+- Services/
+  Бізнес-логіка: авторизація, хешування, читання подій.
+
+- Controllers/
+  HTTP-ендпоінти (MVC екшени).
+
+- ViewModels/
+  Дані для конкретних сторінок UI.
+
+- Views/
+  Razor-сторінки.
+
+
+4) НАЛАШТУВАННЯ В PROGRAM.CS
+----------------------------
+1. AddControllersWithViews() - підключення MVC.
+2. DbContext з SQLite через рядок підключення DefaultConnection.
+3. Реєстрація сервісів у DI:
+   - IEventService -> EventService
+   - IHashService -> SimpleHashService
+   - IAuthService -> AuthServiceWithHash
+4. Cookie authentication:
+   - LoginPath = /Account/Login
+   - AccessDeniedPath = /Account/Login
+5. EnsureCreated() - автостворення БД (зручно для курсового).
+6. Маршрут за замовчуванням:
+   /Home/Index
+
+
+5) МОДЕЛІ БАЗИ ДАНИХ
+--------------------
+5.1 User
+- Id
+- Name
+- Email
+- PasswordHash
+- Salt
+- Role (User / Organizer / Admin)
+
+5.2 Event
+- Id
+- Title
+- Description
+- TitleDescription
+- Location
+- StartAt
+- Capacity
+- ImageUrl
+- OrganizerId
+- Organizer (navigation)
+
+5.3 SavedEvent
+- Id
+- UserId
+- EventId
+- SavedAt
+
+5.4 BookedEvent
+- Id
+- UserId
+- EventId
+- BookedAt
+
+
+6) СЕРВІСИ
+----------
+6.1 SimpleHashService (IHashService)
+- GenerateSalt() - генерує випадкову сіль.
+- BuildHash(password, salt) - SHA256 хеш.
+- Verify(...) - порівнює введений пароль із збереженим хешем.
+
+6.2 AuthServiceWithHash (IAuthService)
+- Register(...):
+  - нормалізує email;
+  - перевіряє унікальність;
+  - генерує salt/hash;
+  - створює User з роллю User.
+- Login(...):
+  - шукає користувача за email;
+  - перевіряє пароль через Verify().
+
+6.3 EventService (IEventService)
+- GetLatestEventsAsync(skip, take, searching):
+  список подій з пагінацією та пошуком.
+- GetEventsCount(searching):
+  кількість подій для пагінації.
+- GetUpcomingEvents(count):
+  найближчі події для сайдбару.
+- GetEventById(id):
+  одна подія для сторінки деталей.
+
+
+7) КОНТРОЛЕРИ
+-------------
+7.1 HomeController
+- Index(...)
+  Головна сторінка, підтягує події + upcoming + лічильник.
+- LoadMore(...)
+  Повертає PartialView EventsChunk для кнопки "Завантажити ще".
+- Details(id)
+  Сторінка однієї події, перевіряє чи збережена/заброньована поточним юзером.
+- ToggleSave(id) [Authorize]
+  Додає або видаляє подію зі збережених.
+- ToggleBooking(id) [Authorize]
+  Додає або скасовує бронь, змінює Capacity.
+- DeleteEvent(id) [Authorize(Roles="Admin,Organizer")]
+  Видаляє подію і пов'язані записи у SavedEvents/BookedEvents.
+
+7.2 AccountController
+- Register GET/POST
+  Реєстрація користувача і автоматичний вхід після успіху.
+- Login GET/POST
+  Вхід користувача.
+- Profile [Authorize]
+  Дані профілю + списки saved/booked подій.
+- Logout POST
+  Вихід із системи (видалення cookie).
+- SignInUser(...)
+  Формує Claims (Id, Name, Email, Role).
+
+7.3 AdminController [Authorize(Roles="Admin")]
+Маршрут: /admin
+- Index()
+  Сторінка адмін-панелі.
+- AddEvent(model)
+  Створення нової події з форми.
+- MakeOrganizer(userId)
+  Видає роль Organizer обраному користувачу.
+- FillUsers(model)
+  Підтягує список юзерів у таблицю.
+
+
+8) VIEWMODELS
+-------------
+- HomeIndexViewModel:
+  дані головної + пагінація + upcoming.
+- HomeEventCardViewModel:
+  картка події на головній.
+- EventsChunkViewModel:
+  частина списку для підвантаження.
+- EventDetailsViewModel:
+  дані сторінки деталей + прапорці IsSaved/IsBooked.
+- LoginViewModel, RegisterViewModel:
+  форми входу/реєстрації + валідація.
+- ProfileViewModel:
+  дані користувача + saved/booked списки.
+- SavedEventProfileItemViewModel, BookedEventProfileItemViewModel:
+  елементи списків профілю.
+- AdminPageViewModel:
+  поля створення події + таблиця користувачів.
+
+
+9) VIEWS (RAZOR)
+----------------
+- Views/Home/Index.cshtml
+  Головна сторінка, пошук, load more, upcoming.
+- Views/Home/EventsChunk.cshtml
+  Partial для нової порції подій.
+- Views/Home/Details.cshtml
+  Деталі події, кнопки save/booking/delete.
+- Views/Account/Login.cshtml
+  Форма входу.
+- Views/Account/Register.cshtml
+  Форма реєстрації.
+- Views/Account/Profile.cshtml
+  Профіль користувача.
+- Views/Admin/Index.cshtml
+  Адмін-панель: створення події + керування ролями.
+- Views/Shared/_Layout.cshtml
+  Базовий HTML-каркас.
+- Views/_ViewStart.cshtml
+  Підключає layout.
+- Views/_ViewImports.cshtml
+  usings і TagHelpers.
+
+
+10) РОЛІ ТА ДОСТУП
+------------------
+- User:
+  перегляд подій, save, booking, профіль.
+- Organizer:
+  те саме + право видаляти події.
+- Admin:
+  усе вище + доступ до /admin + видача Organizer + створення подій.
+
+
+11) ЛОГІКА SAVE/BOOKING
+-----------------------
+Save:
+- натискання кнопки викликає ToggleSave;
+- якщо запис існує -> видаляється;
+- якщо не існує -> створюється.
+
+Booking:
+- перевіряється, чи є місця і чи подія ще не почалась;
+- якщо броні нема -> створюється, Capacity--;
+- якщо бронь вже є -> скасовується, Capacity++.
+
+
+12) ЩО ВАЖЛИВО ПАМ'ЯТАТИ
+------------------------
+- Поточна реалізація розрахована на курсовий формат (простота > складність).
+- EnsureCreated() зручний для локальної роботи.
+- Для production зазвичай використовують міграції EF.
+- Ролі працюють через ClaimTypes.Role в cookie.
+
+
+13) ЯК ЗАПУСКАТИ
+----------------
+1. Перевірити appsettings.json з ConnectionStrings:DefaultConnection.
+2. Запустити:
+   dotnet run
+3. Відкрити URL із launchSettings.
+4. Зареєструватись, увійти.
+5. Для адмін-функцій потрібен користувач з Role = Admin.
+
+
+14) КОРОТКА СХЕМА ВЗАЄМОДІЇ
+---------------------------
+Користувач -> Controller -> Service -> DbContext -> SQLite
+Користувач <- ViewModel <- Controller <- Service <- DbContext
+
+
+15) ПРИМІТКА ПРО КОМЕНТАРІ
+--------------------------
+У код додані пояснювальні коментарі українською:
+- що робить файл;
+- де використовується;
+- що робить ключовий метод.
+

@@ -1,5 +1,6 @@
 namespace FinalProject.Models;
 
+// Зв'язка "користувач забронював подію".
 public class BookedEvent
 {
     public int Id { get; set; }

@@ -1,5 +1,6 @@
 ﻿namespace FinalProject.ViewModels;
 
+// Дані для головної сторінки: список подій, пошук, пагінація, sidebar.
 public class HomeIndexViewModel
 {
     public List<HomeEventCardViewModel> Events { get; set; } = new();

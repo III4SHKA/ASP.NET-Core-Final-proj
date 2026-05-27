@@ -1,8 +1,10 @@
-@model FinalProject.ViewModels.EventDetailsViewModel
+п»ї@model FinalProject.ViewModels.EventDetailsViewModel
+@* РЎС‚РѕСЂС–РЅРєР° РґРµС‚Р°Р»РµР№ РїРѕРґС–С—: РѕРїРёСЃ, Р·Р±РµСЂРµР¶РµРЅРЅСЏ, Р±СЂРѕРЅСЋРІР°РЅРЅСЏ, РІРёРґР°Р»РµРЅРЅСЏ РґР»СЏ СЂРѕР»РµР№. *@
 @{
     ViewData["Title"] = Model.Title;
     var userName = User.Identity?.Name ?? "User";
     var canBookByDate = Model.StartAt > DateTime.UtcNow;
+    var toastMessage = TempData["ToastMessage"] as string;
 }
 
 <div class="ph-wrap">
@@ -17,18 +19,18 @@
                     <div class="ph-profile-menu">
                         <button type="button" class="ph-profile-pill">@userName</button>
                         <div class="ph-profile-dropdown">
-                            <a asp-controller="Account" asp-action="Profile" class="ph-btn-ghost">Профіль</a>
+                            <a asp-controller="Account" asp-action="Profile" class="ph-btn-ghost">РџСЂРѕС„С–Р»СЊ</a>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="ph-btn-ghost">Вийти</button>
+                                <button type="submit" class="ph-btn-ghost">Р’РёР№С‚Рё</button>
                             </form>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <a class="ph-btn-ghost" asp-controller="Account" asp-action="Login">Увійти</a>
-                    <a class="ph-btn-dark" asp-controller="Account" asp-action="Register">Реєстрація</a>
+                    <a class="ph-btn-ghost" asp-controller="Account" asp-action="Login">РЈРІС–Р№С‚Рё</a>
+                    <a class="ph-btn-dark" asp-controller="Account" asp-action="Register">Р РµС”СЃС‚СЂР°С†С–СЏ</a>
                 }
             </nav>
         </div>
@@ -45,7 +47,7 @@
                         <form asp-controller="Home" asp-action="DeleteEvent" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
-                            <button type="submit" class="ph-delete-icon-btn" title="Видалити подію" aria-label="Видалити подію">&#10006;</button>
+                            <button type="submit" class="ph-delete-icon-btn" title="Р’РёРґР°Р»РёС‚Рё РїРѕРґС–СЋ" aria-label="Р’РёРґР°Р»РёС‚Рё РїРѕРґС–СЋ">&#10006;</button>
                         </form>
                     }
                 </div>
@@ -53,18 +55,18 @@
                     <span class="ph-meta-chip ph-meta-chip-time">@Model.StartAt.ToString("dd MMM yyyy")</span>
                     <span class="ph-meta-chip ph-meta-chip-time">@Model.StartAt.ToString("HH:mm")</span>
                     <span class="ph-meta-chip">@Model.Location</span>
-                    <span class="ph-meta-chip">Місць: @Model.Capacity</span>
+                    <span class="ph-meta-chip">РњС–СЃС†СЊ: @Model.Capacity</span>
                 </div>
                 <p class="ph-details-description">@Model.Description</p>
                 <div class="ph-details-actions">
-                    <a class="ph-btn-dark ph-back-btn" asp-controller="Home" asp-action="Index">Назад до подій</a>
+                    <a class="ph-btn-dark ph-back-btn" asp-controller="Home" asp-action="Index">РќР°Р·Р°Рґ РґРѕ РїРѕРґС–Р№</a>
                     <div class="ph-details-actions-right">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <form asp-controller="Home" asp-action="ToggleSave" method="post" class="ph-save-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@Model.Id" />
-                            <button type="submit" class="ph-save-btn">@(Model.IsSaved ? "Видалити зі збереженого" : "Зберегти")</button>
+                            <button type="submit" class="ph-save-btn">@(Model.IsSaved ? "Р’РёРґР°Р»РёС‚Рё Р·С– Р·Р±РµСЂРµР¶РµРЅРѕРіРѕ" : "Р—Р±РµСЂРµРіС‚Рё")</button>
                         </form>
 
                         @if (Model.IsBooked || (Model.Capacity > 0 && canBookByDate))
@@ -72,16 +74,16 @@
                             <form asp-controller="Home" asp-action="ToggleBooking" method="post" class="ph-save-form">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@Model.Id" />
-                                <button type="submit" class="ph-book-btn">@(Model.IsBooked ? "Скасувати бронювання" : "Забронювати місце")</button>
+                                <button type="submit" class="ph-book-btn">@(Model.IsBooked ? "РЎРєР°СЃСѓРІР°С‚Рё Р±СЂРѕРЅСЋРІР°РЅРЅСЏ" : "Р—Р°Р±СЂРѕРЅСЋРІР°С‚Рё РјС–СЃС†Рµ")</button>
                             </form>
                         }
                     }
                     else
                     {
-                        <a class="ph-save-btn" asp-controller="Account" asp-action="Login">Увійти щоб зберегти</a>
+                        <a class="ph-save-btn" asp-controller="Account" asp-action="Login">РЈРІС–Р№С‚Рё С‰РѕР± Р·Р±РµСЂРµРіС‚Рё</a>
                         @if (Model.Capacity > 0 && canBookByDate)
                         {
-                            <a class="ph-book-btn" asp-controller="Account" asp-action="Login">Увійти щоб забронювати</a>
+                            <a class="ph-book-btn" asp-controller="Account" asp-action="Login">РЈРІС–Р№С‚Рё С‰РѕР± Р·Р°Р±СЂРѕРЅСЋРІР°С‚Рё</a>
                         }
                     }
                     </div>
@@ -91,9 +93,27 @@
     </div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(toastMessage))
+{
+    <div id="phToast" class="ph-toast">@toastMessage</div>
+}
 
-
-
-
+@section Scripts {
+    @if (!string.IsNullOrWhiteSpace(toastMessage))
+    {
+        <script>
+            (function () {
+                const toast = document.getElementById("phToast");
+                if (!toast) return;
+                setTimeout(function () {
+                    toast.classList.add("hide");
+                }, 2200);
+                setTimeout(function () {
+                    toast.remove();
+                }, 3000);
+            })();
+        </script>
+    }
+}
 
 

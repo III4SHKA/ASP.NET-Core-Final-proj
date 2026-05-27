@@ -1,5 +1,6 @@
-namespace FinalProject.ViewModels;
+﻿namespace FinalProject.ViewModels;
 
+// Один елемент списку збережених подій у профілі.
 public class SavedEventProfileItemViewModel
 {
     public int EventId { get; set; }

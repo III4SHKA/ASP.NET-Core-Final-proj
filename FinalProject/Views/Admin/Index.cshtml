@@ -1,4 +1,5 @@
-@model FinalProject.ViewModels.AdminPageViewModel
+﻿@model FinalProject.ViewModels.AdminPageViewModel
+@* Адмін-сторінка: створення події і видача ролі Organizer. *@
 @{
     ViewData["Title"] = "Admin";
     var userName = User.Identity?.Name ?? "User";
@@ -131,3 +132,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+
+
+
+

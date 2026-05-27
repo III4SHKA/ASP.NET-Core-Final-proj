@@ -1,5 +1,6 @@
 ﻿namespace FinalProject.ViewModels;
 
+// Дані для сторінки деталей конкретної події.
 public class EventDetailsViewModel
 {
     public int Id { get; set; }

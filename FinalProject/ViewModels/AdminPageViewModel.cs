@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FinalProject.ViewModels;
 
+// ViewModel сторінки /admin:
+// поля для створення події + список користувачів.
 public class AdminPageViewModel
 {
     [Required]
@@ -34,6 +36,7 @@ public class AdminPageViewModel
 
 public class AdminUserRowViewModel
 {
+    // Один рядок у таблиці користувачів на адмін-сторінці.
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

@@ -1,5 +1,6 @@
 ﻿namespace FinalProject.ViewModels;
 
+// Картка події на головній сторінці.
 public class HomeEventCardViewModel
 {
     public int Id { get; set; }
